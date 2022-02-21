@@ -52,13 +52,12 @@ task optimize, "Reduce binary size":
       exec "strip -s " & arg
     if findExe("upx") != "":
       echo "Running 'upx' .."
-      exec "upx" & arg
+      exec "upx " & arg
 
 task zip, "Create a zip to AWS":
   let params = getArgs("zip")
   for arg in params.args:
     selfExec "optimize " & arg
-    
     let tmpDir = gorge "mktemp -d"
     exec "cp "& arg & " " & tmpDir & "/bootstrap"
     exec "zip lambda.zip " & tmpDir

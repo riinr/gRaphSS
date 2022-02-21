@@ -1,8 +1,10 @@
 { pkgs, extraModulesPath ? ./., ... }@args:
 let
-  musl-gcc-env = pkgs.callPackage ./FeedMe/musl-gcc.nix {};
+  musl-gcc-env = pkgs.callPackage ./musl-gcc.nix {};
   stdenv = musl-gcc-env.stdenv;
-  ssl-lib = pkgs.callPackage ./FeedMe/libressl.nix { inherit stdenv; };
+  ssl-lib = pkgs.callPackage ./libressl.nix { inherit stdenv; };
+  sls-nim = pkgs.callPackage ./sls-nim.nix {};
+  sls = pkgs.nodePackages.serverless;
 in
 { 
   imports =  [
@@ -18,17 +20,17 @@ in
   files.gitignore.template."Global/Diff" = true;
   files.gitignore.pattern."*.yaml" = true;
   files.gitignore.pattern."*.json" = true;
+  files.gitignore.pattern."handler" = true;
   files.gitignore.pattern."nimbledeps" = true;
+  files.gitignore.pattern."node_modules" = true;
   # now we can use 'convco' command https://convco.github.io
   files.cmds.convco = true;
   # now we can use 'feat' command as alias to convco
   files.alias.feat = ''convco commit --feat $@'';
   files.alias.fix = ''convco commit --fix $@'';
   files.alias.chore = ''convco commit --chore $@'';
-
   files.cmds.nim-unwrapped = true;
   files.cmds.nimble-unwrapped = true;
-  files.cmds.nodejs-14_x = true;
   files.cmds.upx = true;
   files.cmds.gnumake = true;
   files.cmds.zip = true;
@@ -42,5 +44,7 @@ in
     { name = "AWS_LAMBDA_LOG_GROUP_NAME"; value ="asdfasdf"; }
     { name = "AWS_LAMBDA_LOG_STREAM_NAME"; value ="asdf"; }
     { name = "AWS_LAMBDA_RUNTIME_API"; value ="localhost"; }
+    { name = "NODE_PATH"; value ="${sls-nim}/lib/node_modules/"; }
   ];
+  devshell.packages = [ sls-nim ];
 }
