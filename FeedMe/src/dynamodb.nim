@@ -61,7 +61,7 @@ proc getUrls*(event:JsonNode): JsonNode =
       "FilterExpression": "attribute_exists(xmlUrl)"
     }
     request = scan.call(body, "20")
-    response = waitfor request.issueRequest
+    response = waitFor request.issueRequest
     responseJson = waitFor response.body
   result = parseJson responseJson
   echo "getUrls Duration: ", cpuTime() - startAt

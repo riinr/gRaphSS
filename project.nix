@@ -32,6 +32,7 @@ in
   files.cmds.nim-unwrapped = true;
   files.cmds.nimble-unwrapped = true;
   files.cmds.upx = true;
+  files.cmds.gdb = true;
   files.cmds.gnumake = true;
   files.cmds.zip = true;
   language.c.compiler = "musl";
@@ -44,7 +45,6 @@ in
     { name = "AWS_LAMBDA_LOG_GROUP_NAME"; value ="asdfasdf"; }
     { name = "AWS_LAMBDA_LOG_STREAM_NAME"; value ="asdf"; }
     { name = "AWS_LAMBDA_RUNTIME_API"; value ="localhost"; }
-    { name = "NODE_PATH"; value ="${sls-nim}/lib/node_modules/"; }
   ];
   devshell.packages = [ sls-nim ];
 }
