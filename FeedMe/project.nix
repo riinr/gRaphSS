@@ -46,18 +46,19 @@
   files.gitignore.pattern."nix.config.nims" = true;
   files.text."/FeedMe/nix.config.nims" = ''
     let
-      DEVSHELL_DIR = getEnv "DEVSHELL_DIR"
-      muslGccPath = findExe("musl-gcc")
-    switch "define", "ssl"
-    switch "define", "libressl"
-    switch "gcc.exe", muslGccPath
-    switch "gcc.linkerexe", muslGccPath
-    switch "passL", "-static"
-    switch "passC", "-I" & DEVSHELL_DIR & "/include/openssl"
-    switch "passL", "-L" & DEVSHELL_DIR & "/lib"
-    switch "passL", "-lssl"
-    switch "passL", "-lcrypto"
+      muslGccPath    = findExe("musl-gcc")
+      libreSSLCFlags = staticExec("pkg-config --static --cflags libssl")
+      libreSSLLFlags = staticExec("pkg-config --static --libs   libssl")
+    switch "define",         "ssl"
+    switch "define",         "libressl"
+    switch "define",         "release"
+    switch "gcc.exe",        muslGccPath
+    switch "gcc.linkerexe",  muslGccPath
+    switch "passL",          "-static -s -Wl,-z,noseparate-code"
+    switch "passC",          libreSSLCFlags
+    switch "passL",          libreSSLLFlags
     switch "dynlibOverride", "libssl"
     switch "dynlibOverride", "libcrypto"
+    switch "threads",        "on"
   '';
 }
