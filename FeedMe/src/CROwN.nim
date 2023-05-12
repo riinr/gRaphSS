@@ -27,7 +27,7 @@ proc scheduleNext(urlsResponse: JsonNode): Future[JsonNode] {.async.} =
     echo "lastKey ", lastKey
   return %* lastKey.isNil
 
-proc localHandler(event: JsonNode): JsonNode =
+proc handler(event: JsonNode): JsonNode =
   let startAt = cpuTime()
   let 
     urlsResponse = getUrls(event)
@@ -35,14 +35,16 @@ proc localHandler(event: JsonNode): JsonNode =
     nextSchedule = urlsResponse.scheduleNext
     content = waitFor all(news, nextSchedule)
   result = %* content
-  echo "handler total: ", cpuTime() - startAt
+  echo "handler total: ", cpuTime() - startAt, "s"
 
-proc handler(event: JsonNode, context: LambdaContext): JsonNode =
-  event.localHandler
 
 when isMainModule:
   let memory = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE".getEnv.parseInt
-  if memory > 0:
-    handler.startLambda
-  else:
-    echo newJObject().localHandler
+  if memory <= 0:
+    echo newJObject().handler
+    quit 0
+
+  proc awsHandler(event: JsonNode, context: LambdaContext): JsonNode =
+    event.handler
+
+  awsHandler.startLambda

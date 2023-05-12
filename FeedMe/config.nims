@@ -1,19 +1,9 @@
-when defined(nix):
-  let
-    DEVSHELL_DIR = getEnv "DEVSHELL_DIR"
-    muslGccPath = findExe("musl-gcc")
-  switch "define", "ssl"
-  switch "define", "libressl"
-  switch "gcc.exe", muslGccPath
-  switch "gcc.linkerexe", muslGccPath
-  switch "passL", "-static"
-  switch "passC", "-I" & DEVSHELL_DIR & "/include/openssl"
-  switch "passL", "-L" & DEVSHELL_DIR & "/lib"
-  switch "passL", "-lssl"
-  switch "passL", "-lcrypto"
-  switch "dynlibOverride", "libssl"
-  switch "dynlibOverride", "libcrypto"
-
+when fileExists("./nix.config.nims"):
+  import strutils
+  include ./nix.config.nims
+  when dirExists "./nimbledeps/pkgs":
+    for pkg in listDirs "./nimbledeps/pkgs":
+      switch "path", pkg
 
 type 
   Params = object

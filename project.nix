@@ -1,50 +1,38 @@
-{ pkgs, extraModulesPath ? ./., ... }@args:
+{ pkgs, ... }:
 let
-  musl-gcc-env = pkgs.callPackage ./musl-gcc.nix {};
-  stdenv = musl-gcc-env.stdenv;
-  ssl-lib = pkgs.callPackage ./libressl.nix { inherit stdenv; };
-  sls-nim = pkgs.callPackage ./sls-nim.nix {};
-  sls = pkgs.nodePackages.serverless;
+  muslEnv  = pkgs.overrideCC pkgs.stdenv pkgs.pkgsMusl.gcc;
+  libressl = pkgs.libressl.override { buildShared = false; stdenv = muslEnv; };
+  sls-nim  = pkgs.callPackage ./sls-nim.nix {};
+  sls      = pkgs.nodePackages.serverless;
 in
 { 
   imports =  [
+    ./gitignore.nix
     ./FeedMe/project.nix
-    "${extraModulesPath}/language/c.nix"
   ];
-  # enable .gitignore creation
-  files.gitignore.enable = true;
-  # copy contents from https://github.com/github/gitignore
-  # to our .gitignore
-  files.gitignore.template."Global/Archives" = true;
-  files.gitignore.template."Global/Backup" = true;
-  files.gitignore.template."Global/Diff" = true;
-  files.gitignore.pattern."*.yaml" = true;
-  files.gitignore.pattern."*.json" = true;
-  files.gitignore.pattern."handler" = true;
-  files.gitignore.pattern."nimbledeps" = true;
-  files.gitignore.pattern."node_modules" = true;
-  # now we can use 'convco' command https://convco.github.io
-  files.cmds.convco = true;
-  # now we can use 'feat' command as alias to convco
-  files.alias.feat = ''convco commit --feat $@'';
-  files.alias.fix = ''convco commit --fix $@'';
-  files.alias.chore = ''convco commit --chore $@'';
-  files.cmds.nim-unwrapped = true;
-  files.cmds.nimble-unwrapped = true;
-  files.cmds.upx = true;
-  files.cmds.gdb = true;
-  files.cmds.gnumake = true;
-  files.cmds.zip = true;
-  language.c.compiler = "musl";
-  language.c.libraries = ["musl" "gcc-unwrapped" "binutils-unwrapped" ssl-lib];
-  language.c.includes = ["musl" "gcc-unwrapped" "binutils-unwrapped" ssl-lib];
+
+  files.alias.deploy  = ''cd $PRJ_ROOT/FeedMe;sls deploy $@'';
+  files.direnv.enable = true;
+
   env = [
-    { name = "AWS_LAMBDA_FUNCTION_NAME"; value ="gRaphSS"; }
-    { name = "AWS_LAMBDA_FUNCTION_VERSION"; value ="1.1.0"; }
-    { name = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"; value ="-1024"; }
-    { name = "AWS_LAMBDA_LOG_GROUP_NAME"; value ="asdfasdf"; }
-    { name = "AWS_LAMBDA_LOG_STREAM_NAME"; value ="asdf"; }
-    { name = "AWS_LAMBDA_RUNTIME_API"; value ="localhost"; }
+    { name = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"; value = "-1024"; }
+    { name = "AWS_LAMBDA_FUNCTION_NAME";        value = "gRaphSS"; }
+    { name = "AWS_LAMBDA_FUNCTION_VERSION";     value = "1.1.0"; }
+    { name = "AWS_LAMBDA_LOG_GROUP_NAME";       value = "asdfasdf"; }
+    { name = "AWS_LAMBDA_LOG_STREAM_NAME";      value = "asdf"; }
+    { name = "AWS_LAMBDA_RUNTIME_API";          value = "localhost"; }
+    { name = "PKG_CONFIG_PATH";                  eval = "$DEVSHELL_DIR/lib/pkgconfig/"; }
   ];
-  devshell.packages = [ sls-nim ];
+  devshell.packages = [
+    sls-nim
+    pkgs.musl.dev
+    libressl.dev
+    "binutils"
+    "gcc"
+    "nim"
+    "pkg-config"
+    "upx" 
+    "zip"
+  ];
+
 }
